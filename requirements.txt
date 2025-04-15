@@ -1,0 +1,10 @@
+diffusers
+torchvision
+transformers
+accelerate
+safetensors
+einops
+spaces
+peft
+huggingface-hub
+open-clip-torch

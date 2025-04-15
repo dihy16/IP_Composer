@@ -1,0 +1,16 @@
+base_images_dir: assets/people
+concepts:
+  - concept_name: Age
+    images_dir: assets/age
+    embeddings_path: text_embeddings/age_descriptions.npy
+    rank: 30
+  - concept_name: Emotion
+    images_dir: assets/emotions
+    embeddings_path: text_embeddings/emotion_descriptions.npy
+    rank: 30
+output_dir: assets/age_emotions_results
+seed: 420
+prompt: null
+scale: 1.0
+num_samples: 4
+create_grids: true

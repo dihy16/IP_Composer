@@ -1,0 +1,8 @@
+base_images_dir: assets/objects
+concepts:
+  - concept_name: Patterns
+    images_dir: assets/patterns
+    embeddings_path: text_embeddings/pattern_descriptions.npy
+    rank: 100
+output_dir: assets/patterns_results
+create_grids: true
