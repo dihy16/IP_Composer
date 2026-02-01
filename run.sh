@@ -1,1 +1,1 @@
-python generate_compositions.py --config example_configs\patterns.yaml
+python generate_compositions.py --config ./example_configs/patterns.yaml

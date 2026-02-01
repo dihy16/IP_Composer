@@ -13,6 +13,7 @@ from typing import List, Optional, Tuple
 import pyrallis
 from torchvision.transforms import Compose
 from PIL.Image import Image as PILImage
+import gc
 
 @dataclass
 class ConceptConfig:
@@ -73,6 +74,30 @@ def load_clip_model() -> Tuple[torch.nn.Module, Compose]:
     model.to(device)
     return model, preprocess
 
+
+def _unload_model_from_gpu(model: Optional[torch.nn.Module]) -> None:
+    """Try to move a model to CPU and free GPU memory.
+
+    This is a best-effort helper: move model to CPU, delete reference,
+    empty CUDA cache and run GC.
+    """
+    try:
+        if model is not None:
+            try:
+                model.to('cpu')
+            except Exception:
+                # Some models/pipelines may not support .to('cpu'), ignore
+                pass
+            del model
+    except Exception:
+        pass
+    # free up CUDA memory
+    try:
+        torch.cuda.empty_cache()
+    except Exception:
+        pass
+    gc.collect()
+
 def process_combo(
     image_embeds_base: List[np.ndarray],
     image_names_base: List[str],
@@ -112,10 +137,9 @@ def process_combo(
             save_images(combo_dir, modified_images)
 
 
-def main(cfg: MainConfig):
-    concept_configs = [ConceptConfig(**c) for c in cfg.concepts]
-
-    ip_model = load_ip_adapter_model()
+def embed(concept_configs: List[ConceptConfig], cfg: MainConfig):
+    # Stage 1: load CLIP, compute embeddings / projection matrices
+    print("[embed] Loading CLIP model and computing embeddings...")
     model, preprocess = load_clip_model()
 
     image_files_base = [os.path.join(cfg.base_images_dir, f)
@@ -151,6 +175,20 @@ def main(cfg: MainConfig):
             all_embeds_in = np.load(f)
         projection_matrix = compute_dataset_embeds_svd(all_embeds_in, concept.rank)
         projection_matrices.append(projection_matrix)
+
+    # Unload CLIP model and free GPU memory so next heavy model can be loaded
+    print("[embed] Finished embeddings; unloading CLIP model from GPU...")
+    _unload_model_from_gpu(model)
+
+    return image_embeds_base, image_names_base, concept_images_embeds, concept_images_names, projection_matrices
+
+def main(cfg: MainConfig):
+    concept_configs = [ConceptConfig(**c) for c in cfg.concepts]
+
+    image_embeds_base, image_names_base, concept_images_embeds, concept_images_names, projection_matrices = embed(concept_configs)
+
+    ip_model = load_ip_adapter_model()
+    
 
     process_combo(
         image_embeds_base,
