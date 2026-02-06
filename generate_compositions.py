@@ -185,7 +185,7 @@ def embed(concept_configs: List[ConceptConfig], cfg: MainConfig):
 def main(cfg: MainConfig):
     concept_configs = [ConceptConfig(**c) for c in cfg.concepts]
 
-    image_embeds_base, image_names_base, concept_images_embeds, concept_images_names, projection_matrices = embed(concept_configs)
+    image_embeds_base, image_names_base, concept_images_embeds, concept_images_names, projection_matrices = embed(concept_configs, cfg=cfg)
 
     ip_model = load_ip_adapter_model()
     
